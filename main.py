@@ -83,28 +83,45 @@ def public_info():
 
 @app.get("/protected/profile", status_code=200)
 def protected_profile(request: Request):
+    # Extract Authorization header
     auth_header = request.headers.get("Authorization")
 
-    if not auth_header:
+    if not auth_header or not auth_header.startswith("Bearer "):
         return JSONResponse(
             status_code=401,
-            content={"error": "Access token required"}
+            content={"error": "Invalid or expired token"}
         )
 
-    if not auth_header.startswith("Bearer "):
-        return JSONResponse(
-            status_code=401,
-            content={"error": "Access token required"}
-        )
-
+    # Extract token
     token = auth_header.split(" ", 1)[1].strip()
 
     if not token:
         return JSONResponse(
             status_code=401,
-            content={"error": "Access token required"}
+            content={"error": "Invalid or expired token"}
         )
 
-    return {
-        "message": "Welcome, user! This info is protected."
-    }
+    try:
+        # Ask Supabase to verify the token
+        response = supabase.auth.get_user(token)
+
+        user = response.user
+
+        if not user:
+            return JSONResponse(
+                status_code=401,
+                content={"error": "Invalid or expired token"}
+            )
+
+        # Return only safe user information
+        return {
+            "id": user.id,
+            "email": user.email,
+            "created_at": user.created_at
+        }
+
+    except Exception:
+        return JSONResponse(
+            status_code=401,
+            content={"error": "Invalid or expired token"}
+        )
