@@ -118,6 +118,15 @@ Invalid, expired, missing, or malformed tokens result in:
 
 with HTTP status `401`.
 
+
+### Login
+
+![Login](./login.png)
+
+### Signup
+
+![Signup](./signup.png)
+
 ## Example Login Response
 
 ```json
@@ -145,4 +154,7 @@ A valid token returns the authenticated user's safe metadata, such as:
   "created_at": "2026-08-12T20:40:14.206369Z"
 }
 ```
-
+##
+```bash
+A JWT contains a header describing the signing algorithm, a payload containing claims such as the user ID, email, role, and expiry time, and a cryptographic signature used to verify that it hasn't been tampered with. You should never put passwords, API keys, or other secrets in a JWT because its header and payload are encoded, not encrypted, so anyone who has the token can decode and read them.
+```
