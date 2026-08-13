@@ -5,6 +5,7 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 from supabase import create_client, Client
 from fastapi import Request
+from fastapi import Request, Depends
 load_dotenv()
 
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -125,3 +126,40 @@ def protected_profile(request: Request):
             status_code=401,
             content={"error": "Invalid or expired token"}
         )
+
+
+
+def get_current_user(request: Request):
+    auth_header = request.headers.get("Authorization")
+
+    if not auth_header or not auth_header.startswith("Bearer "):
+        return JSONResponse(
+            status_code=401,
+            content={"error": "Invalid or expired token"}
+        )
+
+    token = auth_header.split(" ", 1)[1].strip()
+
+    if not token:
+        return JSONResponse(
+            status_code=401,
+            content={"error": "Invalid or expired token"}
+        )
+
+    try:
+        response = supabase.auth.get_user(token)
+
+        if not response.user:
+            raise Exception("Invalid user")
+
+        return response.user
+
+    except Exception:
+        return JSONResponse(
+            status_code=401,
+            content={"error": "Invalid or expired token"}
+        )
+@app.post("/auth/logout", status_code=204)
+def logout(user=Depends(get_current_user)):
+    supabase.auth.sign_out()
+    return None
